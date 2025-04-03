@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Exercise Finder</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            text-align: center;
+            padding: 50px;
+            background: linear-gradient(to right, #f4f4f4, #e8e8e8);
+            color: #333;
+        }
+
+        #container {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            display: inline-block;
+            width: 80%;
+            max-width: 800px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15);
+            transition: transform 0.2s ease-in-out;
+        }
+
+        #container:hover {
+            transform: scale(1.02);
+        }
+
+        input {
+            width: 80%;
+            padding: 12px;
+            font-size: 16px;
+            border: 2px solid #007bff;
+            border-radius: 8px;
+            outline: none;
+            transition: border 0.3s ease-in-out;
+        }
+
+        input:focus {
+            border-color: #0056b3;
+        }
+
+        button {
+            padding: 12px 25px;
+            font-size: 16px;
+            cursor: pointer;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            margin-top: 15px;
+            transition: background 0.3s ease-in-out, transform 0.2s;
+        }
+
+        button:hover {
+            background: #0056b3;
+            transform: scale(1.05);
+        }
+
+        #result {
+            margin-top: 25px;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 20px;
+        }
+
+        .exercise-card {
+            background: #fff;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.12);
+            padding: 18px;
+            width: 220px;
+            cursor: pointer;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .exercise-card:hover {
+            transform: translateY(-7px);
+            box-shadow: 0 8px 18px rgba(0, 0, 0, 0.2);
+        }
+
+        .exercise-card h3 {
+            margin-top: 0;
+            color: #007bff;
+            font-size: 18px;
+        }
+
+        .exercise-card p {
+            color: #555;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.6);
+            animation: fadeIn 0.3s;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            width: 50%;
+            margin: 10% auto;
+            text-align: left;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            position: relative;
+        }
+
+        .close {
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            cursor: pointer;
+            font-size: 22px;
+            color: red;
+            transition: color 0.3s;
+        }
+
+        .close:hover {
+            color: darkred;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+    </style>
+</head>
+<body>
+<h1>Find Exercises</h1>
+<div id="container">
+    <input type="text" id="searchQuery" placeholder="Enter a muscle (e.g., biceps)" />
+    <button onclick="fetchExercises()">Search</button>
+    <div id="result"></div>
+</div>
+
+<div id="exerciseModal" class="modal">
+    <div class="modal-content">
+        <span class="close" onclick="closeModal()">&times;</span>
+        <h2 id="modalTitle"></h2>
+        <p id="modalType"></p>
+        <p id="modalDifficulty"></p>
+        <p id="modalInstructions"></p>
+    </div>
+</div>
+
+<script>
+    const API_KEY = 'mvWF9Cb34bFfcULH71TnIw==GSLloi0HXbviqQoV';
+    const muscles = ["biceps", "triceps", "chest", "back", "legs", "abs", "shoulders", "forearms", "glutes", "hamstrings", "quads", "calves"];
+
+    function fetchExercises() {
+        let muscle = document.getElementById('searchQuery').value.trim().toLowerCase();
+        if (!muscle || !muscles.includes(muscle)) {
+            document.getElementById('result').innerHTML = "<p>Please enter a valid muscle group!</p>";
+            return;
+        }
+
+        let apiUrl = `https://api.api-ninjas.com/v1/exercises?muscle=${encodeURIComponent(muscle)}`;
+
+        fetch(apiUrl, { headers: { 'X-Api-Key': API_KEY } })
+            .then(response => response.json())
+            .then(data => {
+                let resultHTML = data.map(exercise => `
+                    <div class="exercise-card" onclick="showModal('${exercise.name}', '${exercise.type}', '${exercise.difficulty}', '${exercise.instructions}')">
+                        <h3>${exercise.name}</h3>
+                        <p><strong>Type:</strong> ${exercise.type}</p>
+                        <p><strong>Difficulty:</strong> ${exercise.difficulty}</p>
+                    </div>
+                `).join('');
+                document.getElementById('result').innerHTML = resultHTML || "<p>No exercises found for this muscle.</p>";
+            })
+            .catch(error => document.getElementById('result').innerHTML = '<p>Failed to fetch exercises.</p>');
+    }
+
+    function showModal(name, type, difficulty, instructions) {
+        document.getElementById('modalTitle').innerText = name;
+        document.getElementById('modalType').innerText = `Type: ${type}`;
+        document.getElementById('modalDifficulty').innerText = `Difficulty: ${difficulty}`;
+        document.getElementById('modalInstructions').innerText = `Instructions: ${instructions}`;
+
+        document.getElementById('exerciseModal').style.display = 'block';
+    }
+
+    function closeModal() {
+        document.getElementById('exerciseModal').style.display = 'none';
+    }
+</script>
+</body>
+</html>
